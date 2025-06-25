@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppContext } from "@/contexts/AppContext";
 import useCartStore from "@/features/cart/cartStore";
+import logo from "@/assets/logo.svg";
 
 const Header = () => {
   const { theme, setTheme, user } = useContext(AppContext);
@@ -53,10 +54,10 @@ const Header = () => {
           <Link
             to="/"
             className="flex items-center space-x-2 text-xl font-bold text-primary"
-            aria-label="ShoeStore Home"
+            aria-label="SoleCrafted Home"
           >
-            <span className="text-2xl">👟</span>
-            <span>ShoeStore</span>
+            <img src={logo} alt="SoleCrafted Logo" className="h-8 w-8" />
+            <span>SoleCrafted</span>
           </Link>
 
           {/* Desktop Navigation */}
