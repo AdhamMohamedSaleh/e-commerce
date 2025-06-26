@@ -6,6 +6,7 @@ import {
   List,
   Star,
   ShoppingCart,
+  Heart,
   X,
   ChevronDown,
   SlidersHorizontal,
@@ -23,6 +24,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { products, categories, brands } from "@/data/products";
 import useProductsStore from "@/features/products/productsStore";
 import useCartStore from "@/features/cart/cartStore";
+import useWishlistStore from "@/features/wishlist/wishlistStore";
 import { useApp } from "@/contexts/AppContext";
 
 // Debounce hook for search
@@ -65,6 +67,7 @@ const Shop = () => {
 
   const { addItem } = useCartStore();
   const { addNotification } = useApp();
+  const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlistStore();
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState(
@@ -145,6 +148,18 @@ const Shop = () => {
       quantity: 1,
     });
     addNotification("Product added to cart!", "success");
+  };
+
+  const handleToggleWishlist = (product) => {
+    const inWishlist = isInWishlist(product.id);
+    toggleWishlistItem(product);
+    addNotification({
+      type: "info",
+      title: inWishlist ? "Removed from Wishlist" : "Added to Wishlist",
+      message: `${product.name} has been ${
+        inWishlist ? "removed from" : "added to"
+      } your wishlist.`,
+    });
   };
 
   const clearFilters = () => {
@@ -274,48 +289,43 @@ const Shop = () => {
             />
           </div>
 
-          {/* Products Grid */}
+          {/* Product Grid */}
           <div className="flex-1">
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <div className="h-48 bg-muted rounded-t-lg" />
-                    <CardContent className="p-4">
-                      <div className="h-4 bg-muted rounded mb-2" />
-                      <div className="h-3 bg-muted rounded w-2/3" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold mb-2">
-                  No products found
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your filters or search terms
-                </p>
-                <Button onClick={clearFilters}>Clear All Filters</Button>
-              </div>
-            ) : (
-              <div
-                className={`grid gap-6 ${
-                  viewMode === "grid"
-                    ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                    : "grid-cols-1"
-                }`}
-              >
-                {filteredProducts.map((product) => (
+            <div
+              className={`grid gap-6 ${
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  : "grid-cols-1"
+              }`}
+            >
+              {loading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} viewMode={viewMode} />
+                ))
+              ) : filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
                     viewMode={viewMode}
                     onAddToCart={(size) => handleAddToCart(product, size)}
+                    onToggleWishlist={() => handleToggleWishlist(product)}
+                    isWishlisted={isInWishlist(product.id)}
                   />
-                ))}
-              </div>
-            )}
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <h2 className="text-xl font-semibold">No products found</h2>
+                  <p className="text-muted-foreground mt-2">
+                    Try adjusting your filters or clearing them to see all
+                    products.
+                  </p>
+                  <Button onClick={clearFilters} className="mt-4">
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -337,11 +347,11 @@ const FilterSidebar = ({
   onClearFilters,
 }) => {
   return (
-    <div className="space-y-6">
+    <aside className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Filters</h2>
-        <Button variant="ghost" size="sm" onClick={onClearFilters}>
-          Clear All
+        <h3 className="text-lg font-semibold">Filters</h3>
+        <Button variant="default" size="sm" onClick={onClearFilters}>
+          Clear all
         </Button>
       </div>
 
@@ -465,12 +475,18 @@ const FilterSidebar = ({
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 
 // Product Card Component
-const ProductCard = ({ product, viewMode, onAddToCart }) => {
+const ProductCard = ({
+  product,
+  viewMode,
+  onAddToCart,
+  onToggleWishlist,
+  isWishlisted,
+}) => {
   return (
     <Card
       className={`group hover:shadow-lg transition-all ${
@@ -496,6 +512,21 @@ const ProductCard = ({ product, viewMode, onAddToCart }) => {
               % OFF
             </div>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              onToggleWishlist();
+            }}
+            className="absolute top-2 right-2 h-8 w-8 bg-background/50 rounded-full text-muted-foreground hover:text-destructive"
+          >
+            <Heart
+              className={`h-5 w-5 ${
+                isWishlisted ? "fill-red-500 text-red-500" : ""
+              }`}
+            />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className={`p-6 ${viewMode === "list" ? "w-2/3" : ""}`}>
@@ -529,7 +560,10 @@ const ProductCard = ({ product, viewMode, onAddToCart }) => {
           </Button>
           <Button
             size="sm"
-            onClick={() => onAddToCart(product.sizes[0])}
+            onClick={(e) => {
+              e.preventDefault();
+              onAddToCart(product.sizes[0]);
+            }}
             className="flex items-center gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
@@ -540,5 +574,32 @@ const ProductCard = ({ product, viewMode, onAddToCart }) => {
     </Card>
   );
 };
+
+const ProductCardSkeleton = ({ viewMode }) => (
+  <Card
+    className={`group hover:shadow-lg transition-all ${
+      viewMode === "list" ? "flex" : ""
+    }`}
+  >
+    <CardHeader className={`p-0 ${viewMode === "list" ? "w-1/3" : ""}`}>
+      <div className="relative overflow-hidden rounded-t-lg">
+        <div
+          className={`w-full bg-muted animate-pulse ${
+            viewMode === "list" ? "h-48" : "h-64"
+          }`}
+        />
+      </div>
+    </CardHeader>
+    <CardContent className={`p-6 ${viewMode === "list" ? "w-2/3" : ""}`}>
+      <div className="h-4 bg-muted rounded w-2/4 mb-2 animate-pulse"></div>
+      <div className="h-6 bg-muted rounded w-3/4 mb-4 animate-pulse"></div>
+      <div className="h-4 bg-muted rounded w-full mb-4 animate-pulse"></div>
+      <div className="flex items-center justify-between">
+        <div className="h-8 bg-muted rounded w-1/4 animate-pulse"></div>
+        <div className="h-8 bg-muted rounded w-1/3 animate-pulse"></div>
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default Shop;

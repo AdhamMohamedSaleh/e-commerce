@@ -8,6 +8,7 @@ import {
   Mail,
   Phone,
   MapPin,
+  X,
 } from "lucide-react";
 
 const Footer = () => {
@@ -40,9 +41,9 @@ const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Follow us on Twitter"
+                aria-label="Follow us on X"
               >
-                <Twitter className="h-5 w-5" />
+                <X className="h-5 w-5" />
               </a>
               <a
                 href="https://instagram.com"
@@ -87,7 +88,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/not-found"
+                  to="/about"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   About Us
@@ -120,7 +121,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/not-found"
+                  to="/help"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Help Center
@@ -128,7 +129,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/not-found"
+                  to="/shipping"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Shipping Info
@@ -136,7 +137,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/not-found"
+                  to="/returns"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Returns & Exchanges
@@ -144,7 +145,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/not-found"
+                  to="/size-guide"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   Size Guide
@@ -152,7 +153,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/not-found"
+                  to="/faq"
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
                   FAQ
@@ -197,7 +198,7 @@ const Footer = () => {
         <div className="border-t mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-muted-foreground">
-              © 2024 ShoeStore. All rights reserved.
+              © 2025 ShoeStore. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <Link

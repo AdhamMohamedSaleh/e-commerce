@@ -13,6 +13,14 @@ import Register from "./pages/Register";
 import Admin from "./pages/Admin";
 import Notification from "./components/common/Notification";
 import NotFound from "./pages/NotFound";
+import About from "./pages/About";
+import HelpCenter from "./pages/HelpCenter";
+import ShippingInfo from "./pages/ShippingInfo";
+import Returns from "./pages/Returns";
+import SizeGuide from "./pages/SizeGuide";
+import FAQ from "./pages/FAQ";
+import Wishlist from "./pages/Wishlist";
+import Profile from "./pages/Profile";
 import "./App.css";
 
 function App() {
@@ -33,6 +41,14 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/not-found" element={<NotFound />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/help" element={<HelpCenter />} />
+              <Route path="/shipping" element={<ShippingInfo />} />
+              <Route path="/returns" element={<Returns />} />
+              <Route path="/size-guide" element={<SizeGuide />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

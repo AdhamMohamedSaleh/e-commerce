@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { products, categories, brands } from "@/data/products";
 
 // TODO: Replace with GET /api/products
 // TODO: Replace with GET /api/products/:id
@@ -21,6 +22,17 @@ const useProductsStore = create((set, get) => ({
   sortBy: "newest",
   isLoading: false,
   error: null,
+
+  fetchProducts: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      set({ products, categories, brands, isLoading: false });
+    } catch (error) {
+      set({ error: "Failed to fetch products", isLoading: false });
+    }
+  },
 
   // Set products
   setProducts: (products) => set({ products }),

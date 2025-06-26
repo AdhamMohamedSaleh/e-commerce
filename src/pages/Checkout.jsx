@@ -14,24 +14,52 @@ import { useApp } from "@/contexts/AppContext";
 // TODO: Replace with POST /api/orders
 // TODO: Replace with POST /api/payment
 
-const checkoutSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number is required"),
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
-  zipCode: z.string().min(5, "ZIP code is required"),
-  cardNumber: z.string().min(16, "Card number is required"),
-  expiryDate: z.string().min(5, "Expiry date is required"),
-  cvv: z.string().min(3, "CVV is required"),
-});
+const paymentMethods = [
+  { value: "card", label: "Credit Card" },
+  { value: "paypal", label: "PayPal" },
+  { value: "applepay", label: "Apple Pay" },
+];
+
+const checkoutSchema = z
+  .object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().min(10, "Phone number is required"),
+    address: z.string().min(1, "Address is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    zipCode: z.string().min(5, "ZIP code is required"),
+    paymentMethod: z.enum(["card", "paypal", "applepay"]),
+    cardNumber: z.string().optional(),
+    expiryDate: z.string().optional(),
+    cvv: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.paymentMethod === "card") {
+        return (
+          data.cardNumber &&
+          data.cardNumber.length >= 16 &&
+          data.expiryDate &&
+          data.expiryDate.length >= 5 &&
+          data.cvv &&
+          data.cvv.length >= 3
+        );
+      }
+      return true;
+    },
+    {
+      message: "Card details are required for credit card payments.",
+      path: ["cardNumber"],
+    }
+  );
 
 const Checkout = () => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("card");
 
   const { items, getTotal, clearCart } = useCartStore();
   const { addNotification } = useApp();
@@ -45,9 +73,15 @@ const Checkout = () => {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm({
     resolver: zodResolver(checkoutSchema),
+    defaultValues: { paymentMethod: "card" },
   });
+
+  // Keep local state and form state in sync
+  const watchedPaymentMethod = watch("paymentMethod", paymentMethod);
 
   const onSubmit = async (data) => {
     setIsProcessing(true);
@@ -285,63 +319,106 @@ const Checkout = () => {
                 </CardContent>
               </Card>
 
-              {/* Payment Information */}
+              {/* Payment Method Selection */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <CreditCard className="h-5 w-5" />
-                    <span>Payment Information</span>
-                  </CardTitle>
+                  <CardTitle>Payment Method</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Card Number
-                    </label>
-                    <Input
-                      {...register("cardNumber")}
-                      placeholder="1234 5678 9012 3456"
-                      className={errors.cardNumber ? "border-red-500" : ""}
-                    />
-                    {errors.cardNumber && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.cardNumber.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Expiry Date
+                  <div className="flex gap-4">
+                    {paymentMethods.map((method) => (
+                      <label
+                        key={method.value}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="radio"
+                          value={method.value}
+                          {...register("paymentMethod")}
+                          checked={watchedPaymentMethod === method.value}
+                          onChange={() => {
+                            setValue("paymentMethod", method.value);
+                            setPaymentMethod(method.value);
+                          }}
+                        />
+                        {method.label}
                       </label>
-                      <Input
-                        {...register("expiryDate")}
-                        placeholder="MM/YY"
-                        className={errors.expiryDate ? "border-red-500" : ""}
-                      />
-                      {errors.expiryDate && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.expiryDate.message}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        CVV
-                      </label>
-                      <Input
-                        {...register("cvv")}
-                        placeholder="123"
-                        className={errors.cvv ? "border-red-500" : ""}
-                      />
-                      {errors.cvv && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.cvv.message}
-                        </p>
-                      )}
-                    </div>
+                    ))}
                   </div>
+                  {watchedPaymentMethod === "card" && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Card Number
+                        </label>
+                        <Input
+                          {...register("cardNumber")}
+                          placeholder="1234 5678 9012 3456"
+                          className={errors.cardNumber ? "border-red-500" : ""}
+                        />
+                        {errors.cardNumber && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.cardNumber.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Expiry Date
+                          </label>
+                          <Input
+                            {...register("expiryDate")}
+                            placeholder="MM/YY"
+                            className={
+                              errors.expiryDate ? "border-red-500" : ""
+                            }
+                          />
+                          {errors.expiryDate && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {errors.expiryDate.message}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            CVV
+                          </label>
+                          <Input
+                            {...register("cvv")}
+                            placeholder="123"
+                            className={errors.cvv ? "border-red-500" : ""}
+                          />
+                          {errors.cvv && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {errors.cvv.message}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {watchedPaymentMethod === "paypal" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled
+                    >
+                      Pay with PayPal (Coming Soon)
+                    </Button>
+                  )}
+                  {watchedPaymentMethod === "applepay" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled
+                    >
+                      Pay with Apple Pay (Coming Soon)
+                    </Button>
+                  )}
+                  {/* TODO: Integrate with real payment provider on backend */}
                 </CardContent>
               </Card>
             </div>

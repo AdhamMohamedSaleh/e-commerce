@@ -170,7 +170,7 @@
 
 ### E-commerce Features
 
-- [ ] Wishlist functionality
+- [x] Wishlist functionality
 - [ ] Product reviews and ratings
 - [ ] Advanced product filtering (material, style, etc.)
 - [ ] Product comparison tool

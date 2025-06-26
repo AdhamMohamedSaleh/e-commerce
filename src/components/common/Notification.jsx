@@ -15,7 +15,7 @@ const Notification = () => {
   if (!notifications.length) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[100] space-y-3 w-full max-w-xs">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] space-y-3 w-full max-w-xs">
       {notifications.map((n) => (
         <Alert key={n.id} className="shadow-lg">
           {iconMap[n.type] || iconMap.info}

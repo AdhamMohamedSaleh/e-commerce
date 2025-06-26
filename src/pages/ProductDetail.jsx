@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { products } from "@/data/products";
 import useProductsStore from "@/features/products/productsStore";
 import useCartStore from "@/features/cart/cartStore";
+import useWishlistStore from "@/features/wishlist/wishlistStore";
 import { useApp } from "@/contexts/AppContext";
 
 const ProductDetail = () => {
@@ -28,6 +29,7 @@ const ProductDetail = () => {
 
   const { getProductById } = useProductsStore();
   const { addItem, isInCart } = useCartStore();
+  const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlistStore();
   const { addNotification } = useApp();
 
   const product = getProductById(parseInt(id));
@@ -65,6 +67,18 @@ const ProductDetail = () => {
       type: "success",
       title: "Added to Cart",
       message: `${product.name} has been added to your cart.`,
+    });
+  };
+
+  const handleToggleWishlist = () => {
+    const inWishlist = isInWishlist(product.id);
+    toggleWishlistItem(product);
+    addNotification({
+      type: "info",
+      title: inWishlist ? "Removed from Wishlist" : "Added to Wishlist",
+      message: `${product.name} has been ${
+        inWishlist ? "removed from" : "added to"
+      } your wishlist.`,
     });
   };
 
@@ -265,22 +279,25 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex space-x-4">
+            {/* Actions */}
+            <div className="flex items-center space-x-4">
+              <Button size="lg" onClick={handleAddToCart} className="flex-1">
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                {isProductInCart ? "Add More" : "Add to Cart"}
+              </Button>
               <Button
+                variant="outline"
                 size="lg"
-                className="flex-1"
-                onClick={handleAddToCart}
-                disabled={isProductInCart}
+                onClick={handleToggleWishlist}
               >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                {isProductInCart ? "In Cart" : "Add to Cart"}
+                <Heart
+                  className={`h-5 w-5 ${
+                    isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""
+                  }`}
+                />
               </Button>
-              <Button variant="outline" size="icon">
-                <Heart className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon">
-                <Share2 className="h-4 w-4" />
+              <Button variant="outline" size="lg">
+                <Share2 className="h-5 w-5" />
               </Button>
             </div>
 

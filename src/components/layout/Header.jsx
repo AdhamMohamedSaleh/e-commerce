@@ -14,11 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppContext } from "@/contexts/AppContext";
 import useCartStore from "@/features/cart/cartStore";
+import useWishlistStore from "@/features/wishlist/wishlistStore";
 import logo from "@/assets/logo.svg";
 
 const Header = () => {
   const { theme, setTheme, user } = useContext(AppContext);
   const { items: cartItems } = useCartStore();
+  const { items: wishlistItems } = useWishlistStore();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +29,7 @@ const Header = () => {
     (total, item) => total + item.quantity,
     0
   );
+  const wishlistItemCount = wishlistItems.length;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -122,18 +125,26 @@ const Header = () => {
               aria-label={`Switch to ${
                 theme === "dark" ? "light" : "dark"
               } theme`}
+              className="group"
             >
               {theme === "dark" ? (
-                <Sun className="h-4 w-4" />
+                <Sun className="h-4 w-4 text-white group-hover:text-black" />
               ) : (
-                <Moon className="h-4 w-4" />
+                <Moon className="h-4 w-4 text-white group-hover:text-black" />
               )}
             </Button>
 
             {/* Wishlist */}
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <Heart className="h-5 w-5" />
-            </Button>
+            <Link to="/wishlist" className="relative flex items-center group">
+              <Button variant="ghost" size="sm">
+                <Heart className="h-4 w-4 text-white group-hover:text-black" />
+                {wishlistItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                    {wishlistItemCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
 
             {/* User Menu */}
             <div className="hidden md:block">
@@ -142,12 +153,10 @@ const Header = () => {
                   <span className="text-sm text-muted-foreground">
                     Hi, {user.name}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate("/profile")}
-                  >
-                    <User className="h-4 w-4" />
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/profile">
+                      <User className="h-4 w-4" />
+                    </Link>
                   </Button>
                 </div>
               ) : (
@@ -155,11 +164,6 @@ const Header = () => {
                   <Link to="/login">
                     <Button variant="ghost" size="sm" aria-label="Sign in">
                       Sign In
-                    </Button>
-                  </Link>
-                  <Link to="/register">
-                    <Button size="sm" aria-label="Create account">
-                      Sign Up
                     </Button>
                   </Link>
                 </div>
@@ -264,12 +268,10 @@ const Header = () => {
                     <span className="text-sm text-muted-foreground">
                       Hi, {user.name}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate("/profile")}
-                    >
-                      <User className="h-4 w-4" />
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to="/profile">
+                        <User className="h-4 w-4" />
+                      </Link>
                     </Button>
                   </div>
                 ) : (
@@ -277,11 +279,6 @@ const Header = () => {
                     <Link to="/login" className="flex-1">
                       <Button variant="ghost" size="sm" className="w-full">
                         Sign In
-                      </Button>
-                    </Link>
-                    <Link to="/register" className="flex-1">
-                      <Button size="sm" className="w-full">
-                        Sign Up
                       </Button>
                     </Link>
                   </div>
