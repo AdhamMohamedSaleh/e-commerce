@@ -1,11 +1,12 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Trash2, ArrowLeft, Heart, ShoppingCart } from "lucide-react";
+import { Trash2, ArrowLeft, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import useWishlistStore from "@/features/wishlist/wishlistStore";
 import useCartStore from "@/features/cart/cartStore";
 import { useApp } from "@/contexts/AppContext";
+import WishlistButton from "@/components/ui/WishlistButton";
 
 const Wishlist = () => {
   const navigate = useNavigate();
@@ -49,7 +50,9 @@ const Wishlist = () => {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
-            <Heart className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <div className="flex justify-center mb-4">
+              <WishlistButton isWishlisted={false} size={64} />
+            </div>
             <h1 className="text-2xl font-bold mb-4">Your wishlist is empty</h1>
             <p className="text-muted-foreground mb-8">
               Looks like you haven't added any items to your wishlist yet.
@@ -100,14 +103,13 @@ const Wishlist = () => {
                       className="w-full h-48 object-cover rounded-lg mb-4"
                     />
                   </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveItem(item)}
-                    className="absolute top-2 right-2 bg-background/50 rounded-full text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2">
+                    <WishlistButton
+                      isWishlisted={true}
+                      onToggle={() => handleRemoveItem(item)}
+                      size={32}
+                    />
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold mb-1 line-clamp-2">

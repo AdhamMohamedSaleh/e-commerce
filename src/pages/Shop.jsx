@@ -26,6 +26,7 @@ import useProductsStore from "@/features/products/productsStore";
 import useCartStore from "@/features/cart/cartStore";
 import useWishlistStore from "@/features/wishlist/wishlistStore";
 import { useApp } from "@/contexts/AppContext";
+import WishlistButton from "@/components/ui/WishlistButton";
 
 // Debounce hook for search
 const useDebounce = (value, delay) => {
@@ -44,6 +45,76 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
+const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+  itemsPerPage,
+  totalItems,
+}) => {
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      onPageChange(currentPage + 1);
+    }
+  };
+
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(
+        <Button
+          key={i}
+          variant={i === currentPage ? "default" : "outline"}
+          size="sm"
+          onClick={() => onPageChange(i)}
+          className="mx-1"
+        >
+          {i}
+        </Button>
+      );
+    }
+    return pageNumbers;
+  };
+
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  return (
+    <div className="flex flex-col md:flex-row items-center justify-between mt-8">
+      <div className="text-sm text-muted-foreground mb-4 md:mb-0">
+        Showing {startItem}-{endItem} of {totalItems} results
+      </div>
+      <div className="flex items-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePrevious}
+          disabled={currentPage === 1}
+          className="mr-2"
+        >
+          Previous
+        </Button>
+        <div className="hidden md:flex">{renderPageNumbers()}</div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleNext}
+          disabled={currentPage === totalPages}
+          className="ml-2"
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -55,8 +126,8 @@ const Shop = () => {
     filters,
     updateFilters,
     getFilteredProducts,
-    getUniqueCategories,
-    getUniqueBrands,
+    categories,
+    brands,
     getUniqueSizes,
     getUniqueColors,
     getPriceRange,
@@ -86,6 +157,8 @@ const Shop = () => {
     searchParams.get("color") || ""
   );
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 12;
 
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -116,7 +189,46 @@ const Shop = () => {
     setSearchParams,
   ]);
 
-  // Update filters when URL params change
+  const handleFilterChange = useCallback(
+    (key, value) => {
+      // Reset to page 1 whenever filters change
+      setCurrentPage(1);
+
+      switch (key) {
+        case "search":
+          setSearchQuery(value);
+          break;
+        case "category":
+          setSelectedCategory(value);
+          break;
+        case "brand":
+          setSelectedBrand(value);
+          break;
+        case "size":
+          setSelectedSize(value);
+          break;
+        case "color":
+          setSelectedColor(value);
+          break;
+        case "priceRange":
+          setPriceRange(value);
+          break;
+        default:
+          break;
+      }
+    },
+    [
+      setSearchQuery,
+      setSelectedCategory,
+      setSelectedBrand,
+      setSelectedSize,
+      setSelectedColor,
+      setPriceRange,
+      setCurrentPage,
+    ]
+  );
+
+  // Update filters in Zustand store
   useEffect(() => {
     updateFilters({
       search: searchQuery,
@@ -138,6 +250,18 @@ const Shop = () => {
 
   const filteredProducts = getFilteredProducts();
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleAddToCart = (product, size) => {
     addItem({
       id: product.id,
@@ -147,7 +271,11 @@ const Shop = () => {
       size,
       quantity: 1,
     });
-    addNotification("Product added to cart!", "success");
+    addNotification({
+      type: "success",
+      title: "Added to Cart",
+      message: `${product.name} has been added to your cart!`,
+    });
   };
 
   const handleToggleWishlist = (product) => {
@@ -209,18 +337,20 @@ const Shop = () => {
             </Button>
 
             {/* View Mode Toggle */}
-            <div className="flex border rounded-lg">
+            <div className="flex gap-2">
               <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
+                variant={viewMode === "grid" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("grid")}
+                className="rounded-lg border transition-colors hover:bg-black hover:text-white"
               >
                 <Grid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
+                variant={viewMode === "list" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("list")}
+                className="rounded-lg border transition-colors hover:bg-black hover:text-white"
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -259,15 +389,18 @@ const Shop = () => {
                 </Button>
               </div>
               <FilterSidebar
-                filters={filters}
+                searchQuery={searchQuery}
+                selectedCategory={selectedCategory}
+                selectedBrand={selectedBrand}
+                selectedSize={selectedSize}
+                selectedColor={selectedColor}
+                priceRange={priceRange}
                 categories={categories}
                 brands={brands}
                 uniqueSizes={getUniqueSizes()}
                 uniqueColors={getUniqueColors()}
-                priceRange={priceRange}
                 priceRangeData={getPriceRange()}
-                onFilterChange={(key, value) => updateFilters({ [key]: value })}
-                onPriceRangeChange={(min, max) => setPriceRange([min, max])}
+                onFilterChange={handleFilterChange}
                 onClearFilters={clearFilters}
               />
             </div>
@@ -276,15 +409,18 @@ const Shop = () => {
           {/* Desktop Sidebar */}
           <div className="hidden md:block w-80 flex-shrink-0">
             <FilterSidebar
-              filters={filters}
+              searchQuery={searchQuery}
+              selectedCategory={selectedCategory}
+              selectedBrand={selectedBrand}
+              selectedSize={selectedSize}
+              selectedColor={selectedColor}
+              priceRange={priceRange}
               categories={categories}
               brands={brands}
               uniqueSizes={getUniqueSizes()}
               uniqueColors={getUniqueColors()}
-              priceRange={priceRange}
               priceRangeData={getPriceRange()}
-              onFilterChange={(key, value) => updateFilters({ [key]: value })}
-              onPriceRangeChange={(min, max) => setPriceRange([min, max])}
+              onFilterChange={handleFilterChange}
               onClearFilters={clearFilters}
             />
           </div>
@@ -299,11 +435,11 @@ const Shop = () => {
               }`}
             >
               {loading ? (
-                Array.from({ length: 6 }).map((_, index) => (
+                Array.from({ length: 12 }).map((_, index) => (
                   <ProductCardSkeleton key={index} viewMode={viewMode} />
                 ))
-              ) : filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
+              ) : paginatedProducts.length > 0 ? (
+                paginatedProducts.map((product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
@@ -326,6 +462,15 @@ const Shop = () => {
                 </div>
               )}
             </div>
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                itemsPerPage={productsPerPage}
+                totalItems={filteredProducts.length}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -335,22 +480,34 @@ const Shop = () => {
 
 // Filter Sidebar Component
 const FilterSidebar = ({
-  filters,
+  searchQuery,
+  selectedCategory,
+  selectedBrand,
+  selectedSize,
+  selectedColor,
+  priceRange,
   categories,
   brands,
   uniqueSizes,
   uniqueColors,
-  priceRange,
   priceRangeData,
   onFilterChange,
-  onPriceRangeChange,
   onClearFilters,
 }) => {
+  const handleColorClick = (color) => {
+    onFilterChange("color", color);
+  };
+
   return (
     <aside className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Filters</h3>
-        <Button variant="default" size="sm" onClick={onClearFilters}>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onClearFilters}
+          className="hover:text-black"
+        >
           Clear all
         </Button>
       </div>
@@ -360,7 +517,7 @@ const FilterSidebar = ({
         <h3 className="font-medium mb-3">Search</h3>
         <Input
           placeholder="Search products..."
-          value={filters.search}
+          value={searchQuery}
           onChange={(e) => onFilterChange("search", e.target.value)}
         />
       </div>
@@ -369,19 +526,20 @@ const FilterSidebar = ({
       <div>
         <h3 className="font-medium mb-3">Category</h3>
         <div className="space-y-2">
-          {categories.map((category) => (
-            <label key={category.id} className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="category"
-                value={category.name}
-                checked={filters.category === category.name}
-                onChange={(e) => onFilterChange("category", e.target.value)}
-                className="rounded"
-              />
-              <span className="text-sm">{category.name}</span>
-            </label>
-          ))}
+          {categories &&
+            categories.map((category) => (
+              <label key={category.id} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="category"
+                  value={category.name}
+                  checked={selectedCategory === category.name}
+                  onChange={(e) => onFilterChange("category", e.target.value)}
+                  className="rounded"
+                />
+                <span className="text-sm">{category.name}</span>
+              </label>
+            ))}
         </div>
       </div>
 
@@ -389,19 +547,20 @@ const FilterSidebar = ({
       <div>
         <h3 className="font-medium mb-3">Brand</h3>
         <div className="space-y-2">
-          {brands.map((brand) => (
-            <label key={brand.id} className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="brand"
-                value={brand.name}
-                checked={filters.brand === brand.name}
-                onChange={(e) => onFilterChange("brand", e.target.value)}
-                className="rounded"
-              />
-              <span className="text-sm">{brand.name}</span>
-            </label>
-          ))}
+          {brands &&
+            brands.map((brand) => (
+              <label key={brand.id} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="brand"
+                  value={brand.name}
+                  checked={selectedBrand === brand.name}
+                  onChange={(e) => onFilterChange("brand", e.target.value)}
+                  className="rounded"
+                />
+                <span className="text-sm">{brand.name}</span>
+              </label>
+            ))}
         </div>
       </div>
 
@@ -415,7 +574,7 @@ const FilterSidebar = ({
                 type="radio"
                 name="size"
                 value={size}
-                checked={filters.size === size}
+                checked={selectedSize === size}
                 onChange={(e) => onFilterChange("size", e.target.value)}
                 className="rounded"
               />
@@ -428,19 +587,25 @@ const FilterSidebar = ({
       {/* Colors */}
       <div>
         <h3 className="font-medium mb-3">Color</h3>
-        <div className="space-y-2">
+        <div className="flex flex-wrap gap-3">
           {uniqueColors.map((color) => (
-            <label key={color} className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="color"
-                value={color}
-                checked={filters.color === color}
-                onChange={(e) => onFilterChange("color", e.target.value)}
-                className="rounded"
-              />
-              <span className="text-sm">{color}</span>
-            </label>
+            <button
+              key={color}
+              type="button"
+              onClick={() => handleColorClick(color)}
+              className={`h-8 w-8 rounded-full border-2 transition-transform duration-150 ease-in-out
+                ${
+                  selectedColor === color
+                    ? "ring-2 ring-offset-2 ring-primary scale-110"
+                    : "hover:scale-110"
+                }`}
+              style={{ backgroundColor: color.toLowerCase() }}
+              aria-label={`Select ${color} color`}
+            >
+              {selectedColor === color && (
+                <div className="h-full w-full rounded-full border-2 border-background" />
+              )}
+            </button>
           ))}
         </div>
       </div>
@@ -455,7 +620,10 @@ const FilterSidebar = ({
               placeholder="Min"
               value={priceRange[0]}
               onChange={(e) =>
-                onPriceRangeChange(Number(e.target.value), priceRange[1])
+                onFilterChange("priceRange", [
+                  Number(e.target.value),
+                  priceRange[1],
+                ])
               }
               className="w-20"
             />
@@ -465,7 +633,10 @@ const FilterSidebar = ({
               placeholder="Max"
               value={priceRange[1]}
               onChange={(e) =>
-                onPriceRangeChange(priceRange[0], Number(e.target.value))
+                onFilterChange("priceRange", [
+                  priceRange[0],
+                  Number(e.target.value),
+                ])
               }
               className="w-20"
             />
@@ -512,21 +683,14 @@ const ProductCard = ({
               % OFF
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.preventDefault();
-              onToggleWishlist();
-            }}
-            className="absolute top-2 right-2 h-8 w-8 bg-background/50 rounded-full text-muted-foreground hover:text-destructive"
-          >
-            <Heart
-              className={`h-5 w-5 ${
-                isWishlisted ? "fill-red-500 text-red-500" : ""
-              }`}
+          <div className="absolute top-2 right-2 z-10">
+            <WishlistButton
+              isWishlisted={isWishlisted}
+              onToggle={onToggleWishlist}
+              size={32}
+              className="!bg-black !border-black !rounded-md group/productcard"
             />
-          </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className={`p-6 ${viewMode === "list" ? "w-2/3" : ""}`}>
@@ -564,9 +728,9 @@ const ProductCard = ({
               e.preventDefault();
               onAddToCart(product.sizes[0]);
             }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-black text-white hover:bg-white hover:text-black transition-colors"
           >
-            <ShoppingCart className="h-4 w-4" />
+            <ShoppingCart className="h-4 w-4 transition-colors" />
             Add
           </Button>
         </div>

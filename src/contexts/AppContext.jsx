@@ -1,20 +1,21 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { toast } from "sonner";
 
 // Initial state
 const initialState = {
   theme: "light",
   user: null,
+  isSessionLoading: true,
   isLoading: false,
-  notifications: [],
 };
 
 // Action types
 const ACTIONS = {
   SET_THEME: "SET_THEME",
   SET_USER: "SET_USER",
+  LOGOUT: "LOGOUT",
+  SESSION_LOADED: "SESSION_LOADED",
   SET_LOADING: "SET_LOADING",
-  ADD_NOTIFICATION: "ADD_NOTIFICATION",
-  REMOVE_NOTIFICATION: "REMOVE_NOTIFICATION",
 };
 
 // Reducer function
@@ -24,20 +25,12 @@ function appReducer(state, action) {
       return { ...state, theme: action.payload };
     case ACTIONS.SET_USER:
       return { ...state, user: action.payload };
+    case ACTIONS.LOGOUT:
+      return { ...state, user: null };
+    case ACTIONS.SESSION_LOADED:
+      return { ...state, isSessionLoading: false };
     case ACTIONS.SET_LOADING:
       return { ...state, isLoading: action.payload };
-    case ACTIONS.ADD_NOTIFICATION:
-      return {
-        ...state,
-        notifications: [...state.notifications, action.payload],
-      };
-    case ACTIONS.REMOVE_NOTIFICATION:
-      return {
-        ...state,
-        notifications: state.notifications.filter(
-          (n) => n.id !== action.payload
-        ),
-      };
     default:
       return state;
   }
@@ -50,10 +43,16 @@ export const AppContext = createContext();
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Load theme from localStorage on mount
+  // Load theme and user from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "light";
     dispatch({ type: ACTIONS.SET_THEME, payload: savedTheme });
+
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      dispatch({ type: ACTIONS.SET_USER, payload: JSON.parse(savedUser) });
+    }
+    dispatch({ type: ACTIONS.SESSION_LOADED });
   }, []);
 
   // Save theme to localStorage when it changes
@@ -62,25 +61,36 @@ export function AppProvider({ children }) {
     document.documentElement.classList.toggle("dark", state.theme === "dark");
   }, [state.theme]);
 
+  // Save user to localStorage when it changes
+  useEffect(() => {
+    if (state.user) {
+      localStorage.setItem("user", JSON.stringify(state.user));
+    } else {
+      localStorage.removeItem("user");
+    }
+  }, [state.user]);
+
   // Actions
   const actions = {
     setTheme: (theme) => dispatch({ type: ACTIONS.SET_THEME, payload: theme }),
     setUser: (user) => dispatch({ type: ACTIONS.SET_USER, payload: user }),
+    logout: () => dispatch({ type: ACTIONS.LOGOUT }),
     setLoading: (loading) =>
       dispatch({ type: ACTIONS.SET_LOADING, payload: loading }),
     addNotification: (notification) => {
-      const id = Date.now();
-      dispatch({
-        type: ACTIONS.ADD_NOTIFICATION,
-        payload: { ...notification, id },
-      });
-      // Auto remove after 5 seconds
-      setTimeout(() => {
-        dispatch({ type: ACTIONS.REMOVE_NOTIFICATION, payload: id });
-      }, 5000);
+      const { type = "info", title, message } = notification;
+      switch (type) {
+        case "success":
+          toast.success(title, { description: message });
+          break;
+        case "error":
+          toast.error(title, { description: message });
+          break;
+        default:
+          toast.info(title, { description: message });
+          break;
+      }
     },
-    removeNotification: (id) =>
-      dispatch({ type: ACTIONS.REMOVE_NOTIFICATION, payload: id }),
   };
 
   const value = {

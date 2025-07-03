@@ -156,7 +156,7 @@ const Cart = () => {
                               handleQuantityChange(item, item.quantity - 1)
                             }
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-6 w-6" />
                           </Button>
                           <span className="w-8 text-center">
                             {item.quantity}
@@ -168,7 +168,7 @@ const Cart = () => {
                               handleQuantityChange(item, item.quantity + 1)
                             }
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-6 w-6" />
                           </Button>
                         </div>
                       </div>

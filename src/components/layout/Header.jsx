@@ -18,7 +18,8 @@ import useWishlistStore from "@/features/wishlist/wishlistStore";
 import logo from "@/assets/logo.svg";
 
 const Header = () => {
-  const { theme, setTheme, user } = useContext(AppContext);
+  const { theme, setTheme, user, logout, isSessionLoading } =
+    useContext(AppContext);
   const { items: cartItems } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
   const navigate = useNavigate();
@@ -71,14 +72,14 @@ const Header = () => {
           >
             <Link
               to="/"
-              className="text-sm font-medium transition-colors hover:text-primary"
+              className="text-sm font-medium transition-colors text-black hover:text-blue-500"
               aria-label="Go to home page"
             >
               Home
             </Link>
             <Link
               to="/shop"
-              className="text-sm font-medium transition-colors hover:text-primary"
+              className="text-sm font-medium transition-colors text-black hover:text-blue-500"
               aria-label="Go to shop page"
             >
               Shop
@@ -110,8 +111,14 @@ const Header = () => {
                 aria-label="Search for shoes"
               />
             </div>
-            <Button type="submit" size="sm" aria-label="Search">
-              Search
+            <Button
+              type="submit"
+              size="sm"
+              aria-label="Search"
+              className="relative overflow-hidden bg-black text-white w-20 h-9 p-0 flex-shrink-0 !bg-black !text-white"
+            >
+              <span className="relative z-10">Search</span>
+              <span className="absolute inset-0 bg-white/20 translate-x-full hover:translate-x-0 active:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none" />
             </Button>
           </form>
 
@@ -148,7 +155,13 @@ const Header = () => {
 
             {/* User Menu */}
             <div className="hidden md:block">
-              {user ? (
+              {isSessionLoading ? (
+                <div className="flex items-center space-x-2 animate-pulse">
+                  <div className="h-4 w-16 rounded bg-muted" />
+                  <div className="h-9 w-9 rounded-md bg-muted" />
+                  <div className="h-9 w-20 rounded-md bg-muted" />
+                </div>
+              ) : user ? (
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-muted-foreground">
                     Hi, {user.name}
@@ -157,6 +170,14 @@ const Header = () => {
                     <Link to="/profile">
                       <User className="h-4 w-4" />
                     </Link>
+                  </Button>
+                  <Button
+                    variant="link-primary"
+                    size="sm"
+                    onClick={logout}
+                    aria-label="Sign out"
+                  >
+                    Logout
                   </Button>
                 </div>
               ) : (
@@ -263,16 +284,30 @@ const Header = () => {
 
               {/* Mobile User Actions */}
               <div className="flex flex-col space-y-2">
-                {user ? (
+                {isSessionLoading ? (
+                  <div className="h-9 w-full rounded-md bg-muted animate-pulse" />
+                ) : user ? (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
                       Hi, {user.name}
                     </span>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to="/profile">
-                        <User className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                    <div className="flex items-center">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link to="/profile">
+                          <User className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="link-primary"
+                        size="sm"
+                        onClick={() => {
+                          logout();
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        Logout
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">

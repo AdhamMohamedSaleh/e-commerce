@@ -7,11 +7,13 @@ import { products, categories } from "@/data/products";
 import useProductsStore from "@/features/products/productsStore";
 import useCartStore from "@/features/cart/cartStore";
 import { useApp } from "@/contexts/AppContext";
+import useWishlistStore from "@/features/wishlist/wishlistStore";
 
 const Home = () => {
   const { setProducts, setCategories } = useProductsStore();
   const { addItem } = useCartStore();
   const { addNotification } = useApp();
+  const { toggleItem: toggleWishlistItem, isInWishlist } = useWishlistStore();
 
   useEffect(() => {
     // Initialize products and categories
@@ -205,18 +207,47 @@ const Home = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1"
+                      className="flex-[2]"
                       asChild
                     >
                       <Link to={`/product/${product.id}`}>View Details</Link>
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => handleAddToCart(product)}
-                      className="flex items-center gap-2"
+                      className={
+                        `flex-[1] flex items-center justify-center gap-2 whitespace-nowrap relative overflow-hidden bg-black` +
+                        (isInWishlist(product.id) ? "" : "")
+                      }
+                      onClick={() => {
+                        const wasInWishlist = isInWishlist(product.id);
+                        toggleWishlistItem(product);
+                        setTimeout(() => {
+                          if (wasInWishlist) {
+                            addNotification({
+                              type: "info",
+                              title: "Removed from Wishlist",
+                              message: `${product.name} has been removed from your wishlist.`,
+                            });
+                          } else {
+                            addNotification({
+                              type: "success",
+                              title: "Added to Wishlist",
+                              message: `${product.name} has been added to your wishlist.`,
+                            });
+                          }
+                        }, 0);
+                      }}
                     >
-                      <ShoppingCart className="h-4 w-4" />
-                      Add
+                      <span
+                        className={`relative z-10 transition-colors duration-300 ${
+                          isInWishlist(product.id)
+                            ? "bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent font-bold"
+                            : "text-white"
+                        }`}
+                      >
+                        Add to Wishlist
+                      </span>
+                      <span className="absolute inset-0 bg-white/20 translate-x-full hover:translate-x-0 transition-transform duration-300 ease-out z-0 pointer-events-none"></span>
                     </Button>
                   </div>
                 </CardContent>

@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AppProvider } from "./contexts/AppContext";
+import { Toaster } from "sonner";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import Home from "./pages/Home";
@@ -11,7 +12,6 @@ import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
-import Notification from "./components/common/Notification";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import HelpCenter from "./pages/HelpCenter";
@@ -28,8 +28,8 @@ function App() {
     <AppProvider>
       <Router>
         <div className="min-h-screen flex flex-col">
+          <Toaster richColors />
           <Header />
-          <Notification />
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Home />} />

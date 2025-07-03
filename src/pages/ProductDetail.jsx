@@ -18,6 +18,7 @@ import useProductsStore from "@/features/products/productsStore";
 import useCartStore from "@/features/cart/cartStore";
 import useWishlistStore from "@/features/wishlist/wishlistStore";
 import { useApp } from "@/contexts/AppContext";
+import WishlistButton from "@/components/ui/WishlistButton";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -266,7 +267,7 @@ const ProductDetail = () => {
                   size="icon"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 >
-                  -
+                  <span className="text-3xl leading-none">-</span>
                 </Button>
                 <span className="w-12 text-center">{quantity}</span>
                 <Button
@@ -274,7 +275,7 @@ const ProductDetail = () => {
                   size="icon"
                   onClick={() => setQuantity(quantity + 1)}
                 >
-                  +
+                  <span className="text-3xl leading-none">+</span>
                 </Button>
               </div>
             </div>
@@ -285,17 +286,12 @@ const ProductDetail = () => {
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {isProductInCart ? "Add More" : "Add to Cart"}
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleToggleWishlist}
-              >
-                <Heart
-                  className={`h-5 w-5 ${
-                    isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-              </Button>
+              <WishlistButton
+                isWishlisted={isInWishlist(product.id)}
+                onToggle={handleToggleWishlist}
+                size={40}
+                className="ml-2"
+              />
               <Button variant="outline" size="lg">
                 <Share2 className="h-5 w-5" />
               </Button>
